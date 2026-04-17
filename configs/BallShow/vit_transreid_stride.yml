@@ -1,0 +1,68 @@
+MODEL:
+  PRETRAIN_CHOICE: 'imagenet'
+  PRETRAIN_PATH: '/root/autodl-tmp/jx_vit_base_p16_224-80ecf9dd.pth'  # 预训练权重路径
+  METRIC_LOSS_TYPE: 'triplet'
+  IF_LABELSMOOTH: 'off'
+  IF_WITH_CENTER: 'no'
+  NAME: 'transformer'
+  NO_MARGIN: True
+  DEVICE_ID: ('5')
+  TRANSFORMER_TYPE: 'vit_base_patch16_224_TransReID'
+  STRIDE_SIZE: [12, 12]
+  SIE_CAMERA: True
+  SIE_COE: 3.0
+  JPM: True
+  RE_ARRANGE: True
+  # 损失权重微调 - 优化ID损失和三元组损失的平衡
+  ID_LOSS_WEIGHT: 0.6      # 微调ID损失权重（从0.5提升到0.6）
+  TRIPLET_LOSS_WEIGHT: 1.4 # 微调三元组损失权重（从1.5降低到1.4）
+
+INPUT:
+  SIZE_TRAIN: [256, 128]
+  SIZE_TEST: [256, 128]
+  PROB: 0.5 # random horizontal flip
+  RE_PROB: 0.5 # random erasing
+  PADDING: 10
+  PIXEL_MEAN: [0.5, 0.5, 0.5]
+  PIXEL_STD: [0.5, 0.5, 0.5]
+  # 篮球场景特定增强
+  BASKETBALL_AUG_PROB: 0.4  # 篮球场景增强概率
+  OCCLUSION_PROB: 0.25      # 遮挡增强概率
+  POSE_CHANGE_PROB: 0.25    # 姿态变化增强概率
+
+DATASETS:
+  NAMES: ('ballshow')
+  ROOT_DIR: ('/root/autodl-tmp/data')
+
+DATALOADER:
+  SAMPLER: 'softmax_triplet'
+  NUM_INSTANCE: 4
+  NUM_WORKERS: 8
+
+SOLVER:
+  OPTIMIZER_NAME: 'SGD'
+  MAX_EPOCHS: 200           # 训练200轮
+  BASE_LR: 0.008
+  IMS_PER_BATCH: 64
+  WARMUP_METHOD: 'cosine'   # 余弦退火调度
+  WARMUP_EPOCHS: 5          # 预热5个epoch
+  LARGE_FC_LR: False
+  CHECKPOINT_PERIOD: 10     # 每10轮保存一次
+  START_EPOCH: 0            # 起始epoch（用于断点续训）
+  LOG_PERIOD: 50
+  EVAL_PERIOD: 20           # 每20轮评估一次
+  WEIGHT_DECAY:  1e-4
+  WEIGHT_DECAY_BIAS: 1e-4
+  BIAS_LR_FACTOR: 2
+
+TEST:
+  EVAL: True
+  IMS_PER_BATCH: 256
+  RE_RANKING: False
+  WEIGHT: '/root/transreid/TransReID/logs/BallShow_vit_transreid_stride/transformer_200.pth'
+  NECK_FEAT: 'before'
+  FEAT_NORM: 'yes'
+
+OUTPUT_DIR: 'logs/visual_test_new1'
+
+
